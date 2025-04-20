@@ -5,8 +5,8 @@
 # Teslo API Nest
 
 1. Clonar Proyecto
-2. ```yarn install```
-3. Clonar el archivo __.env.template__ y renombrarlo a __.env__
+2. `yarn install`
+3. Clonar el archivo **.env.template** y renombrarlo a **.env**
 4. Cambiar las variables de entorno
 5. levantar la base de datos
 
@@ -14,4 +14,4 @@
 docker compose up -d
 ```
 
-6. Levantar modo desarrollo ```yarn start:dev```
+6. Levantar modo desarrollo `yarn start:dev`
