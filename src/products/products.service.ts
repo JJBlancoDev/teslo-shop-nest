@@ -13,6 +13,7 @@ import { Product } from './entities/product.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 import { validate as isUUID } from 'uuid';
+import { ProductImage } from './entities';
 
 @Injectable()
 export class ProductsService {
@@ -21,11 +22,22 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+
+    @InjectRepository(ProductImage)
+    private readonly productImageRepository: Repository<ProductImage>,
   ) {}
 
   async create(createProductDto: CreateProductDto) {
     try {
-      const product = this.productRepository.create(createProductDto);
+      const { images = [], ...productDetails } = createProductDto;
+
+      const product = this.productRepository.create({
+        ...productDetails,
+        images: images.map((image) =>
+          this.productImageRepository.create({ url: image }),
+        ),
+      });
+
       await this.productRepository.save(product);
 
       return product;
@@ -41,19 +53,24 @@ export class ProductsService {
     const [data, total] = await this.productRepository.findAndCount({
       take: limit,
       skip: offset,
-      // TODO: Relaciones
+      relations: {
+        images: true,
+      },
     });
 
     const totalPages = Math.ceil(total / limit);
 
     return {
-      pagination: {
+      metadata: {
         page,
         total,
         limit,
         pages: totalPages,
       },
-      data,
+      data: data.map((product) => ({
+        ...product,
+        images: product.images?.map((img) => img.url),
+      })),
     };
   }
 
@@ -77,6 +94,7 @@ export class ProductsService {
     const product = await this.productRepository.preload({
       id: id,
       ...updateProductDto,
+      images: [],
     });
 
     if (!product) {
@@ -97,6 +115,15 @@ export class ProductsService {
 
     return {
       message: `Product with id ${id} deleted`,
+    };
+  }
+
+  async findOnePlain(term: string) {
+    const { images = [], ...rest } = await this.findOne(term);
+
+    return {
+      ...rest,
+      images: images.map((image) => image.url),
     };
   }
 
